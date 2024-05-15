@@ -77,10 +77,12 @@
           eachPlatform = targetPlatforms: mkFor: pkgs.lib.attrsets.mapAttrs (name: platform: mkFor platform) targetPlatforms // {
             default = mkFor ((mkPlatform (targetPlatforms.${system} // { isDefault = true; })).value);
           };
+
+          platforms = builtins.listToAttrs (map mkPlatform targetPlatforms);
         in
         rec {
-          packagesForEachPlatform = srcLocation: eachPlatform targetPlatforms (crateFor srcLocation);
-          devShellsForEachPlatform = srcLocation: eachPlatform targetPlatforms (shellFor srcLocation);
+          packagesForEachPlatform = srcLocation: eachPlatform platforms (crateFor srcLocation);
+          devShellsForEachPlatform = srcLocation: eachPlatform platforms (shellFor srcLocation);
         };
     };
 } 
