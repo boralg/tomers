@@ -99,7 +99,7 @@
 
             installPhase = ''
               mkdir $out
-              cp ${filteredResults}/* $out
+              cp ${filteredResults}/* $out/
             '';
 
             # installPhase = ''
