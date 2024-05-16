@@ -70,8 +70,7 @@
             out = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type:
-                (lib.foldl' (acc: p: acc || lib.hasPrefix "${p}/" path) false targetPlatform.resultFiles)
-                || (craneLib.filterCargoSources path type);
+                (lib.foldl' (acc: p: acc || lib.hasPrefix "${p}/" path) false targetPlatform.resultFiles);
             };
           in
           (craneLib.buildPackage {
