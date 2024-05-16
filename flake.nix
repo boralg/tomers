@@ -99,37 +99,27 @@
             version = "1.0";
 
             src = filteredSrc;
-            
 
             buildInputs = [ pkgs.coreutils ];
-            phases = [ "unpackPhase" "filterPhase" "installPhase" ];
+            phases = [ "unpackPhase" "installPhase" ];
 
             unpackPhase = ''
               runHook preUnpack
               sourceRoot=$(mktemp -d)
-              cp -r ${filteredSrc}/* $sourceRoot
+              cp -rT ${filteredSrc} $sourceRoot
+              cd $sourceRoot
               runHook postUnpack
             '';
 
-            filterPhase = ''
-              echo "Contents of the source directory before filtering:"
+            installPhase = ''
+              echo "Contents of the source directory before installation:"
               ls -R $sourceRoot
 
-              mkdir -p $TMPDIR/filtered
-              for file in ${lib.concatStringsSep " " filteredFilesList}; do
-                cp --parents "$sourceRoot/$file" $TMPDIR/filtered
-              done
-
-              echo "Contents of the filtered directory after copying files:"
-              ls -R $TMPDIR/filtered
-
-              cp -r $TMPDIR/filtered/* .
-              echo ${lib.concatStringsSep "\n" filteredFilesList} > files.txt
-            '';
-
-            installPhase = ''
               mkdir -p $out
-              cp -r . $out/
+              cp -r $sourceRoot/* $out/
+
+              echo "Contents of the output directory after installation:"
+              ls -R $out
             '';
           };
 
