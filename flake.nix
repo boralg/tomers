@@ -95,7 +95,12 @@
             src = filteredResults;
 
             buildInputs = [ pkgs.coreutils ];
-            # phases = [ "installPhase" ];
+            phases = [ "installPhase" ];
+
+            installPhase = ''
+              mkdir $out
+              cp ${filteredResults}/* $out
+            '';
 
             # installPhase = ''
             #   runHook preInstall
