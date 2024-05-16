@@ -23,7 +23,7 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
 
-          mkPlatform = { system, arch, depsBuild ? [ ], env ? { }, postInstall ? _: "", isDefault ? false }: {
+          mkPlatform = { system, arch, depsBuild ? [ ], env ? { }, postInstall ? _: "", fileFilter ? _: _: _: true, isDefault ? false }: {
             name = arch;
             value = let pi = postInstall; in
               rec {
@@ -32,6 +32,7 @@
                 inherit depsBuild;
                 inherit env;
                 inherit isDefault;
+                inherit fileFilter;
                 postInstall = crateName: if isDefault then "" else pi crateName;
               };
           };
@@ -53,7 +54,11 @@
             in
             craneLib.buildPackage
               ({
-                src = craneLib.cleanCargoSource (craneLib.path srcLocation);
+                src = craneLib.cleanSourceWith {
+                  src = craneLib.path srcLocation;
+                  filter = path: type:
+                    targetPlatform.fileFilter craneLib path type;
+                };
 
                 strictDeps = true;
                 doCheck = false;
