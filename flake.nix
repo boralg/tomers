@@ -67,14 +67,17 @@
           let
             craneLib = mkCraneLib targetPlatform;
             buildPath = srcLocation;
+
             filteredSrc = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type: targetPlatform.buildFiles lib craneLib path type;
             };
-            resultFilesFilter = targetPlatform.resultFiles lib craneLib;
-            resultFilesList = lib.attrsets.filterAttrs (path: _: resultFilesFilter craneLib path) (builtins.readDir filteredSrc);
+            filteredResults = lib.cleanSourceWith {
+              src = craneLib.path srcLocation;
+              filter = path: type: targetPlatform.resultFiles lib craneLib path type;
+            };
           in
-          craneLib.buildPackage
+          (craneLib.buildPackage
             ({
               src = filteredSrc;
 
@@ -84,18 +87,30 @@
               CARGO_BUILD_TARGET = targetPlatform.system;
               depsBuildBuild = targetPlatform.depsBuild;
 
-              installPhase = ''
-                mkdir -p $out
-
-                for file in ${lib.concatStringsSep " " (lib.attrNames resultFilesList)}; do
-                  dst=$out/$file
-                  mkdir -p $(dirname $dst)
-                  cp ${filteredSrc}/$file $dst
-                done
-              '';
               postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
 
-            });
+            })) // (pkgs.stdenv.mkDerivation {
+            pname = "filtered-files";
+            version = "1.0";
+
+            src = filteredSrc;
+            filter = filter;
+
+            buildInputs = [ pkgs.coreutils ];
+            phases = [ "unpackPhase" "filterPhase" "installPhase" ];
+            filterPhase = ''
+              mkdir filtered
+              find . -type f | grep -E "${toString filter}" > filtered/files.txt
+              cat filtered/files.txt | while read file; do
+                cp --parents "$file" filtered
+              done
+            '';
+
+            installPhase = ''
+              mkdir -p $out
+              cp -r filtered/* $out/
+            '';
+          });
 
         shellFor = srcLocation: targetPlatform:
           let
