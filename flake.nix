@@ -69,7 +69,7 @@
             buildPath = srcLocation;
 
             filter = path: type: targetPlatform.resultFiles lib craneLib path type;
-            
+
             filteredSrc = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type: targetPlatform.buildFiles lib craneLib path type && filter path type;
@@ -101,25 +101,23 @@
             src = filteredResults;
 
             buildInputs = [ pkgs.coreutils ];
-            phases = [ "unpackPhase" "installPhase" ];
-
-            unpackPhase = ''
-              runHook preUnpack
-              sourceRoot=$(mktemp -d)
-              cp -rT ${filteredResults} $sourceRoot
-              cd $sourceRoot
-              runHook postUnpack
-            '';
+            phases = [ "installPhase" ];
 
             installPhase = ''
-              echo "Contents of the source directory before installation:"
-              ls -R $sourceRoot
+              runHook preInstall
 
+              echo "Copying contents of filteredResults to $out"
               mkdir -p $out
-              cp -r $sourceRoot/* $out/
+
+              for file in $(find ${filteredResults} -type f); do
+                mkdir -p $out/$(dirname $\{file#${filteredResults}})
+                cp $file $out/$(dirname $\{file#${filteredResults}})
+              done
 
               echo "Contents of the output directory after installation:"
               ls -R $out
+
+              runHook postInstall
             '';
           };
 
