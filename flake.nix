@@ -68,9 +68,11 @@
             craneLib = mkCraneLib targetPlatform;
             buildPath = srcLocation;
 
+            filter = path: type: targetPlatform.resultFiles lib craneLib path type;
+
             filteredSrc = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
-              filter = path: type: targetPlatform.buildFiles lib craneLib path type;
+              filter = path: type: targetPlatform.buildFiles lib craneLib path type && filter path type;
             };
             filteredResults = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
@@ -89,7 +91,7 @@
 
               postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
 
-            })) // (pkgs.stdenv.mkDerivation {
+            })) // pkgs.stdenv.mkDerivation {
             pname = "filtered-files";
             version = "1.0";
 
@@ -97,6 +99,7 @@
 
             buildInputs = [ pkgs.coreutils ];
             phases = [ "unpackPhase" "filterPhase" "installPhase" ];
+
             filterPhase = ''
               mkdir filtered
               find . -type f | grep -E "${toString filter}" > filtered/files.txt
@@ -109,7 +112,7 @@
               mkdir -p $out
               cp -r filtered/* $out/
             '';
-          });
+          };
 
         shellFor = srcLocation: targetPlatform:
           let
