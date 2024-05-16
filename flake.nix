@@ -94,7 +94,6 @@
             version = "1.0";
 
             src = filteredSrc;
-            filter = filter;
 
             buildInputs = [ pkgs.coreutils ];
             phases = [ "unpackPhase" "filterPhase" "installPhase" ];
