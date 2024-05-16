@@ -68,7 +68,7 @@
             craneLib = mkCraneLib targetPlatform;
             buildPath = srcLocation;
 
-             filter = path: type: targetPlatform.resultFiles lib craneLib path type;
+            filter = path: type: targetPlatform.resultFiles lib craneLib path type;
             
             filteredSrc = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
@@ -102,24 +102,32 @@
             buildInputs = [ pkgs.coreutils ];
             phases = [ "unpackPhase" "filterPhase" "installPhase" ];
 
+            unpackPhase = ''
+              runHook preUnpack
+              sourceRoot=$(mktemp -d)
+              cp -r ${filteredSrc}/* $sourceRoot
+              runHook postUnpack
+            '';
+
             filterPhase = ''
               echo "Contents of the source directory before filtering:"
               ls -R .
 
-              mkdir filtered
+              mkdir -p $TMPDIR/filtered
               for file in ${lib.concatStringsSep " " filteredFilesList}; do
-                cp --parents "$file" filtered
+                cp --parents "$file" $TMPDIR/filtered
               done
 
               echo "Contents of the filtered directory after copying files:"
-              ls -R filtered
+              ls -R $TMPDIR/filtered
 
-              echo ${lib.concatStringsSep "\n" filteredFilesList} > filtered/files.txt
+              cp -r $TMPDIR/filtered/* .
+              echo ${lib.concatStringsSep "\n" filteredFilesList} > files.txt
             '';
 
             installPhase = ''
               mkdir -p $out
-              cp -r filtered/* $out/
+              cp -r . $out/
             '';
           };
 
