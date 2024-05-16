@@ -88,7 +88,32 @@
             depsBuildBuild = targetPlatform.depsBuild;
 
             postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
-          });
+          }) // pkgs.stdenv.mkDerivation {
+            pname = "filtered-files";
+            version = "1.0";
+
+            src = filteredResults;
+
+            buildInputs = [ pkgs.coreutils ];
+            # phases = [ "installPhase" ];
+
+            # installPhase = ''
+            #   runHook preInstall
+
+            #   echo "Copying contents of filteredResults to $out"
+            #   mkdir -p $out
+
+            #   for file in $(find ${filteredResults} -type f); do
+            #     mkdir -p $out/$(dirname $\{file#${filteredResults}})
+            #     cp $file $out/$(dirname $\{file#${filteredResults}})
+            #   done
+
+            #   echo "Contents of the output directory after installation:"
+            #   ls -R $out
+
+            #   runHook postInstall
+            # '';
+          };
 
         shellFor = srcLocation: targetPlatform:
           let
