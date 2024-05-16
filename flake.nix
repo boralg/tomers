@@ -52,8 +52,13 @@
           crateFor = srcLocation: targetPlatform:
             let
               craneLib = mkCraneLib targetPlatform;
+              filteredSource = lib.cleanSourceWith {
+                src = craneLib.path srcLocation;
+                filter = path: type: targetPlatform.fileFilter lib craneLib path type;
+              };
             in
-            craneLib.buildPackage
+            filteredSource 
+              ++ craneLib.buildPackage
               ({
                 src = lib.cleanSourceWith {
                   src = craneLib.path srcLocation;
