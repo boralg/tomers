@@ -29,27 +29,21 @@
           , depsBuild ? [ ]
           , env ? { }
           , postInstall ? _: ""
-          , buildFiles ? _: craneLib: path: type: (craneLib.filterCargoSources path type)
-          , resultFiles ? _: craneLib: path: type: false
+          , buildFiles ? [ ]
+          , resultFiles ? [ ]
           , isDefault ? false
           }: {
             name = arch;
-            value =
-              let
-                pi = postInstall;
-                bf = buildFiles;
-                rf = resultFiles;
-              in
-              rec {
-                inherit system;
-                inherit arch;
-                inherit depsBuild;
-                inherit env;
-                postInstall = crateName: if isDefault then "" else pi crateName;
-                buildFiles = lib: craneLib: path: type: (bf lib craneLib path type) || (craneLib.filterCargoSources path type);
-                resultFiles = lib: craneLib: path: type: rf lib craneLib path type;
-                inherit isDefault;
-              };
+            value = rec {
+              inherit system;
+              inherit arch;
+              inherit depsBuild;
+              inherit env;
+              postInstall = crateName: if isDefault then "" else pi crateName;
+              inherit buildFiles;
+              inherit resultFiles;
+              inherit isDefault;
+            };
           };
 
         mkCraneLib = targetPlatform:
@@ -66,20 +60,15 @@
         crateFor = srcLocation: targetPlatform:
           let
             craneLib = mkCraneLib targetPlatform;
-            buildPath = srcLocation;
-
-            filteredSrc = lib.cleanSourceWith {
+            src = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
-              filter = targetPlatform.buildFiles lib craneLib;
+              filter = path: type:
+                (lib.foldl' (acc: p: acc || lib.hasPrefix "${p}/" path) false targetPlatform.buildFiles)
+                || (craneLib.filterCargoSources path type);
             };
-            filteredResults = lib.cleanSourceWith {
-              src = craneLib.path srcLocation;
-              filter = targetPlatform.resultFiles lib craneLib;
-            };
-            _ = builtins.trace filteredResults;
           in
           (craneLib.buildPackage {
-            src = filteredSrc;
+            inherit src;
 
             strictDeps = true;
             doCheck = false;
