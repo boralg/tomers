@@ -83,7 +83,7 @@
               CARGO_BUILD_TARGET = targetPlatform.system;
               depsBuildBuild = targetPlatform.depsBuild;
 
-              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
+              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
             };
           in
           pkgs.stdenv.mkDerivation
