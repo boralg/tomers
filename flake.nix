@@ -67,6 +67,12 @@
                 (lib.foldl' (acc: p: acc || lib.hasPrefix "${p}/" path) false targetPlatform.buildFiles)
                 || (craneLib.filterCargoSources path type);
             };
+            out = lib.cleanSourceWith {
+              src = craneLib.path srcLocation;
+              filter = path: type:
+                (lib.foldl' (acc: p: acc || lib.hasPrefix "${p}/" path) false targetPlatform.resultFiles)
+                || (craneLib.filterCargoSources path type);
+            };
           in
           (craneLib.buildPackage {
             inherit src;
@@ -82,7 +88,7 @@
             pname = "filtered-files";
             version = "1.0";
 
-            inherit src;
+            src = out;
 
             buildInputs = [ pkgs.coreutils ];
             phases = [ "installPhase" ];
@@ -91,7 +97,7 @@
               mkdir -p $out
 
               for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
-                cp -R ${src}/$dir $out/
+                cp -R ${out}/$dir $out/
               done
             '';
           };
