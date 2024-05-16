@@ -94,6 +94,7 @@
             phases = [ "installPhase" ];
 
             installPhase = ''
+              ls ${out}
               mkdir -p $out
 
               for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
