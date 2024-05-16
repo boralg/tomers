@@ -94,7 +94,8 @@
             phases = [ "installPhase" ];
 
             installPhase = ''
-              cp ${out} $out
+              mkdir $out
+              cp -R ${out} $out
 
               # ls ${out}
               # mkdir -p $out
