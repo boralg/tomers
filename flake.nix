@@ -68,33 +68,27 @@
             craneLib = mkCraneLib targetPlatform;
             buildPath = srcLocation;
 
-            filter = path: type: targetPlatform.resultFiles lib craneLib path type;
-
             filteredSrc = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
-              filter = path: type: targetPlatform.buildFiles lib craneLib path type && filter path type;
+              filter = targetPlatform.buildFiles lib craneLib;
             };
             filteredResults = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
-              filter = path: type: targetPlatform.resultFiles lib craneLib path type;
+              filter = targetPlatform.resultFiles lib craneLib;
             };
-
-            filteredFilesList = builtins.filter (path: filter path "regular") (lib.attrNames (builtins.readDir (toString filteredSrc)));
-            _ = builtins.trace filteredSrc;
+            _ = builtins.trace filteredResults;
           in
-          (craneLib.buildPackage
-            ({
-              src = filteredSrc;
+          (craneLib.buildPackage {
+            src = filteredSrc;
 
-              strictDeps = true;
-              doCheck = false;
+            strictDeps = true;
+            doCheck = false;
 
-              CARGO_BUILD_TARGET = targetPlatform.system;
-              depsBuildBuild = targetPlatform.depsBuild;
+            CARGO_BUILD_TARGET = targetPlatform.system;
+            depsBuildBuild = targetPlatform.depsBuild;
 
-              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
-
-            }));
+            postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
+          });
 
         shellFor = srcLocation: targetPlatform:
           let
