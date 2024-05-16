@@ -111,11 +111,11 @@
 
             filterPhase = ''
               echo "Contents of the source directory before filtering:"
-              ls -R .
+              ls -R $sourceRoot
 
               mkdir -p $TMPDIR/filtered
               for file in ${lib.concatStringsSep " " filteredFilesList}; do
-                cp --parents "$file" $TMPDIR/filtered
+                cp --parents "$sourceRoot/$file" $TMPDIR/filtered
               done
 
               echo "Contents of the filtered directory after copying files:"
