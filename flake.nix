@@ -24,19 +24,33 @@
           pkgs = nixpkgs.legacyPackages.${system};
           inherit (pkgs) lib;
 
-          mkPlatform = { system, arch, depsBuild ? [ ], env ? { }, postInstall ? _: "", fileFilter ? _: _: _: _: true, isDefault ? false }: {
-            name = arch;
-            value = let pi = postInstall; in
-              rec {
-                inherit system;
-                inherit arch;
-                inherit depsBuild;
-                inherit env;
-                inherit isDefault;
-                inherit fileFilter;
-                postInstall = crateName: if isDefault then "" else pi crateName;
-              };
-          };
+          mkPlatform =
+            { system
+            , arch
+            , depsBuild ? [ ]
+            , env ? { }
+            , postInstall ? _: ""
+            , buildFiles ? _: craneLib: path: type: (craneLib.filterCargoSources path type)
+            , resultFiles ? _: craneLib: path: type: false
+            , isDefault ? false
+            }: {
+              name = arch;
+              value =
+                let
+                  pi = postInstall;
+                  bf = buildFiles;
+                in
+                rec {
+                  inherit system;
+                  inherit arch;
+                  inherit depsBuild;
+                  inherit env;
+                  postInstall = crateName: if isDefault then "" else pi crateName;
+                  buildFiles = lib: craneLib: path: type: (bf lib craneLib path type) || (craneLib.filterCargoSources path type);
+                  inherit resultFiles;
+                  inherit isDefault;
+                };
+            };
 
           mkCraneLib = targetPlatform:
             let
@@ -52,19 +66,19 @@
           crateFor = srcLocation: targetPlatform:
             let
               craneLib = mkCraneLib targetPlatform;
-              filteredSource = lib.cleanSourceWith {
+              buildPath = srcLocation;
+              filteredSrc = lib.cleanSourceWith {
                 src = craneLib.path srcLocation;
-                filter = path: type: targetPlatform.fileFilter lib craneLib path type;
+                filter = path: type: targetPlatform.buildFiles lib craneLib path type;
+              };
+              resultFiles = lib.cleanSourceWith {
+                src = craneLib.path srcLocation;
+                filter = path: type: targetPlatform.resultFiles lib craneLib path type;
               };
             in
-            lib.filterSource filteredSource "./*"
-              ++ craneLib.buildPackage
+            craneLib.buildPackage
               ({
-                src = lib.cleanSourceWith {
-                  src = craneLib.path srcLocation;
-                  filter = path: type:
-                    targetPlatform.fileFilter lib craneLib path type;
-                };
+                src = filteredSrc;
 
                 strictDeps = true;
                 doCheck = false;
@@ -73,6 +87,11 @@
                 depsBuildBuild = targetPlatform.depsBuild;
 
                 postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
+
+                installPhase = ''
+                  mkdir -p $out/result-files
+                  cp -r ${resultFiles}/* $out/result-files/
+                '';
               } // targetPlatform.env);
 
           shellFor = srcLocation: targetPlatform:
@@ -95,5 +114,4 @@
           devShellsForEachPlatform = srcLocation: eachPlatform platforms (shellFor srcLocation);
         };
     };
-} 
- 
+}
