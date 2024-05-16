@@ -57,7 +57,7 @@
                 filter = path: type: targetPlatform.fileFilter lib craneLib path type;
               };
             in
-            filteredSource 
+            lib.filterSource filteredSource "./*"
               ++ craneLib.buildPackage
               ({
                 src = lib.cleanSourceWith {
