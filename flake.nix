@@ -86,10 +86,7 @@
               CARGO_BUILD_TARGET = targetPlatform.system;
               depsBuildBuild = targetPlatform.depsBuild;
 
-              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
-
-              # Ensure the result files are included
-              installPhase = ''
+              postInstall = (targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname) + ''
                 mkdir -p $out/result-files
                 find ${filteredSrc} -type f | while read file; do
                   if ${targetPlatform.resultFiles} ${craneLib} $file; then
