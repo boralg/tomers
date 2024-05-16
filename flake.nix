@@ -82,16 +82,16 @@
             pname = "filtered-files";
             version = "1.0";
 
-            src = filteredResults;
+            inherit src;
 
             buildInputs = [ pkgs.coreutils ];
             phases = [ "installPhase" ];
 
             installPhase = ''
               mkdir -p $out/bin
-              ls ${filteredResults}
-              echo oye ${filteredResults}
-              cp -R ${filteredResults} $out/bin
+              ls ${src}
+              echo oye ${src}
+              cp -R ${src} $out/bin
             '';
 
             # installPhase = ''
