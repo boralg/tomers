@@ -84,15 +84,17 @@
               CARGO_BUILD_TARGET = targetPlatform.system;
               depsBuildBuild = targetPlatform.depsBuild;
 
-              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname + ''
-                mkdir -p $out/result-files
+              installPhase = ''
+                mkdir -p $out
 
                 for file in ${lib.concatStringsSep " " (lib.attrNames resultFilesList)}; do
-                  dst=$out/result-files/$file
+                  dst=$out/$file
                   mkdir -p $(dirname $dst)
                   cp ${filteredSrc}/$file $dst
                 done
               '';
+              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
+
             });
 
         shellFor = srcLocation: targetPlatform:
