@@ -69,7 +69,7 @@
             buildPath = srcLocation;
 
             filter = path: type: targetPlatform.resultFiles lib craneLib path type;
-
+            
             filteredSrc = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type: targetPlatform.buildFiles lib craneLib path type && filter path type;
@@ -78,6 +78,8 @@
               src = craneLib.path srcLocation;
               filter = path: type: targetPlatform.resultFiles lib craneLib path type;
             };
+
+            filteredFilesList = builtins.filter (path: filter path "regular") (lib.attrNames (builtins.readDir (toString filteredSrc)));
           in
           (craneLib.buildPackage
             ({
@@ -102,10 +104,10 @@
 
             filterPhase = ''
               mkdir filtered
-              find . -type f | grep -E "${toString filter}" > filtered/files.txt
-              cat filtered/files.txt | while read file; do
+              for file in ${lib.concatStringsSep " " filteredFilesList}; do
                 cp --parents "$file" filtered
               done
+              echo ${lib.concatStringsSep "\n" filteredFilesList} > filtered/files.txt
             '';
 
             installPhase = ''
