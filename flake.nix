@@ -34,16 +34,17 @@
           , isDefault ? false
           }: {
             name = arch;
-            value = rec {
-              inherit system;
-              inherit arch;
-              inherit depsBuild;
-              inherit env;
-              postInstall = crateName: if isDefault then "" else pi crateName;
-              inherit buildFiles;
-              inherit resultFiles;
-              inherit isDefault;
-            };
+            value = let pi = postInstall; in
+              rec {
+                inherit system;
+                inherit arch;
+                inherit depsBuild;
+                inherit env;
+                postInstall = crateName: if isDefault then "" else pi crateName;
+                inherit buildFiles;
+                inherit resultFiles;
+                inherit isDefault;
+              };
           };
 
         mkCraneLib = targetPlatform:
