@@ -71,10 +71,8 @@
               src = craneLib.path srcLocation;
               filter = path: type: targetPlatform.buildFiles lib craneLib path type;
             };
-            resultFiles = lib.cleanSourceWith {
-              src = craneLib.path srcLocation;
-              filter = path: type: targetPlatform.resultFiles lib craneLib path type;
-            };
+            resultFilesFilter = targetPlatform.resultFiles lib craneLib;
+            resultFilesList = lib.attrsets.filterAttrs (path: _: resultFilesFilter craneLib path) (builtins.readDir filteredSrc);
           in
           craneLib.buildPackage
             ({
@@ -86,17 +84,16 @@
               CARGO_BUILD_TARGET = targetPlatform.system;
               depsBuildBuild = targetPlatform.depsBuild;
 
-              postInstall = (targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname) + ''
+              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname + ''
                 mkdir -p $out/result-files
-                find ${filteredSrc} -type f | while read file; do
-                  if ${targetPlatform.resultFiles} ${craneLib} $file; then
-                    dst=$out/result-files/$(realpath --relative-to=${filteredSrc} $file)
-                    mkdir -p $(dirname $dst)
-                    cp "$file" "$dst"
-                  fi
+
+                for file in ${lib.concatStringsSep " " (lib.attrNames resultFilesList)}; do
+                  dst=$out/result-files/$file
+                  mkdir -p $(dirname $dst)
+                  cp ${filteredSrc}/$file $dst
                 done
               '';
-            } // targetPlatform.env);
+            });
 
         shellFor = srcLocation: targetPlatform:
           let
@@ -105,7 +102,7 @@
           craneLib.devShell ({
             CARGO_BUILD_TARGET = targetPlatform.system;
             depsBuildBuild = targetPlatform.depsBuild;
-          } // targetPlatform.env);
+          });
 
         eachPlatform = targetPlatforms: mkFor: pkgs.lib.attrsets.mapAttrs (name: platform: mkFor platform) targetPlatforms // {
           default = mkFor ((mkPlatform (targetPlatforms.${system} // { isDefault = true; })).value);
