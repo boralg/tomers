@@ -73,40 +73,40 @@
                 (lib.foldl' (acc: p: acc || lib.hasInfix "${p}/" path) false targetPlatform.resultFiles)
                 || (craneLib.filterCargoSources path type);
             };
+
+            package = craneLib.buildPackage {
+              inherit src;
+
+              strictDeps = true;
+              doCheck = false;
+
+              CARGO_BUILD_TARGET = targetPlatform.system;
+              depsBuildBuild = targetPlatform.depsBuild;
+
+              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
+            };
           in
-          (craneLib.buildPackage {
-            inherit src;
+          pkgs.stdenv.mkDerivation
+            {
+              pname = "filtered-files";
+              version = "1.0";
 
-            strictDeps = true;
-            doCheck = false;
+              src = out;
 
-            CARGO_BUILD_TARGET = targetPlatform.system;
-            depsBuildBuild = targetPlatform.depsBuild;
+              buildInputs = [ pkgs.coreutils ];
+              phases = [ "installPhase" ];
 
-            postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
-          }) // pkgs.stdenv.mkDerivation {
-            pname = "filtered-files";
-            version = "1.0";
+              installPhase = ''
+                mkdir -p $out/bin
 
-            src = out;
+                cp -R ${package} $out
 
-            buildInputs = [ pkgs.coreutils ];
-            phases = [ "installPhase" ];
+                for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
+                  cp -R ${out}/$dir $out/bin/$dir
+                done
+              '';
+            };
 
-            installPhase = ''
-              mkdir $out
-              #cp -R ${out} $out
-
-              for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
-                cp -R ${out}/$dir $out/$dir
-              done
-
-              # ls ${out}
-              # mkdir -p $out
-
-              
-            '';
-          };
 
         shellFor = srcLocation: targetPlatform:
           let
