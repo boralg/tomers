@@ -80,6 +80,7 @@
             };
 
             filteredFilesList = builtins.filter (path: filter path "regular") (lib.attrNames (builtins.readDir (toString filteredSrc)));
+            _ = builtins.trace filteredSrc;
           in
           (craneLib.buildPackage
             ({
@@ -98,7 +99,7 @@
             version = "1.0";
 
             src = filteredSrc;
-            _ = builtins.trace filteredSrc;
+            
 
             buildInputs = [ pkgs.coreutils ];
             phases = [ "unpackPhase" "filterPhase" "installPhase" ];
