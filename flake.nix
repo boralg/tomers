@@ -98,6 +98,7 @@
             version = "1.0";
 
             src = filteredSrc;
+            _ = builtins.trace filteredSrc;
 
             buildInputs = [ pkgs.coreutils ];
             phases = [ "unpackPhase" "filterPhase" "installPhase" ];
