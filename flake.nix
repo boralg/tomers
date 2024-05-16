@@ -88,28 +88,16 @@
             phases = [ "installPhase" ];
 
             installPhase = ''
-              mkdir -p $out/bin
-              ls ${src}
-              echo oye ${src}
-              cp -R ${src} $out/bin
+              mkdir -p $out/result-files
+
+              for file in $(find ${src} -type f); do
+                if ${lib.foldl' (acc: p: acc || lib.hasInfix "${p}/" file) false targetPlatform.resultFiles}; then
+                  dst=$out/result-files/$(realpath --relative-to=${src} $file)
+                  mkdir -p $(dirname $dst)
+                  cp "$file" "$dst"
+                fi
+              done
             '';
-
-            # installPhase = ''
-            #   runHook preInstall
-
-            #   echo "Copying contents of filteredResults to $out"
-            #   mkdir -p $out
-
-            #   for file in $(find ${filteredResults} -type f); do
-            #     mkdir -p $out/$(dirname $\{file#${filteredResults}})
-            #     cp $file $out/$(dirname $\{file#${filteredResults}})
-            #   done
-
-            #   echo "Contents of the output directory after installation:"
-            #   ls -R $out
-
-            #   runHook postInstall
-            # '';
           };
 
         shellFor = srcLocation: targetPlatform:
