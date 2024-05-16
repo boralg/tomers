@@ -98,7 +98,7 @@
             pname = "filtered-files";
             version = "1.0";
 
-            src = filteredSrc;
+            src = filteredResults;
 
             buildInputs = [ pkgs.coreutils ];
             phases = [ "unpackPhase" "installPhase" ];
@@ -106,7 +106,7 @@
             unpackPhase = ''
               runHook preUnpack
               sourceRoot=$(mktemp -d)
-              cp -rT ${filteredSrc} $sourceRoot
+              cp -rT ${filteredResults} $sourceRoot
               cd $sourceRoot
               runHook postUnpack
             '';
