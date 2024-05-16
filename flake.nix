@@ -95,14 +95,16 @@
 
             installPhase = ''
               mkdir $out
-              cp -R ${out} $out
+              #cp -R ${out} $out
+
+              for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
+                cp -R ${out}/$dir $out/$dir
+              done
 
               # ls ${out}
               # mkdir -p $out
 
-              # for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
-              #   cp -R ${out}/$dir $out/
-              # done
+              
             '';
           };
 
