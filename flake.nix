@@ -39,6 +39,7 @@
                 let
                   pi = postInstall;
                   bf = buildFiles;
+                  rf = resultFiles;
                 in
                 rec {
                   inherit system;
@@ -47,7 +48,7 @@
                   inherit env;
                   postInstall = crateName: if isDefault then "" else pi crateName;
                   buildFiles = lib: craneLib: path: type: (bf lib craneLib path type) || (craneLib.filterCargoSources path type);
-                  inherit resultFiles;
+                  resultFiles = lib: craneLib: path: type: rf lib craneLib path type;
                   inherit isDefault;
                 };
             };
@@ -88,9 +89,13 @@
 
                 postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${srcLocation}/Cargo.toml"; }).pname;
 
+                # Ensure the result files are included
                 installPhase = ''
                   mkdir -p $out/result-files
-                  cp -r ${resultFiles}/* $out/result-files/
+                  for file in $(find ${resultFiles} -type f); do
+                    mkdir -p $out/result-files/$(dirname $file)
+                    cp "$file" "$out/result-files/$file"
+                  done
                 '';
               } // targetPlatform.env);
 
