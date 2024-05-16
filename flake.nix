@@ -70,7 +70,7 @@
             out = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type:
-                (lib.foldl' (acc: p: acc || builtins.match "*/${p}/.*" path != null) false targetPlatform.resultFiles)
+                (lib.foldl' (acc: p: acc || builtins.match ".*/${p}/.*" path != null) false targetPlatform.resultFiles)
                 || (craneLib.filterCargoSources path type);
             };
 
