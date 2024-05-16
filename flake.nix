@@ -99,8 +99,8 @@
 
             installPhase = ''
               mkdir -p $out/bin
-              ls .
-              cp ./* $out/bin
+              ls ${filteredResults}
+              cp ${filteredResults}/* $out/bin
             '';
 
             # installPhase = ''
