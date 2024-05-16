@@ -22,8 +22,9 @@
       libFor = system: targetPlatforms:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          inherit (pkgs) lib;
 
-          mkPlatform = { system, arch, depsBuild ? [ ], env ? { }, postInstall ? _: "", fileFilter ? _: _: _: true, isDefault ? false }: {
+          mkPlatform = { system, arch, depsBuild ? [ ], env ? { }, postInstall ? _: "", fileFilter ? _: _: _: _: true, isDefault ? false }: {
             name = arch;
             value = let pi = postInstall; in
               rec {
@@ -54,10 +55,10 @@
             in
             craneLib.buildPackage
               ({
-                src = craneLib.cleanSourceWith {
+                src = lib.cleanSourceWith {
                   src = craneLib.path srcLocation;
                   filter = path: type:
-                    targetPlatform.fileFilter craneLib path type;
+                    targetPlatform.fileFilter lib craneLib path type;
                 };
 
                 strictDeps = true;
