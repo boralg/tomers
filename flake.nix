@@ -92,9 +92,11 @@
                 # Ensure the result files are included
                 installPhase = ''
                   mkdir -p $out/result-files
-                  for file in $(find ${resultFiles} -type f); do
-                    mkdir -p $out/result-files/$(dirname $file)
-                    cp "$file" "$out/result-files/$file"
+                  for file in $(find ${filteredSrc} -type f); do
+                    if ${targetPlatform.resultFiles} ${craneLib} $file; then
+                      mkdir -p $out/result-files/$(dirname $file)
+                      cp "$file" "$out/result-files/$file"
+                    fi
                   done
                 '';
               } // targetPlatform.env);
