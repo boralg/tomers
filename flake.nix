@@ -101,7 +101,7 @@
               mkdir -p $out/bin
               ls ${filteredResults}
               echo oye ${filteredResults}
-              cp ${filteredResults}/* $out/bin
+              cp -R ${filteredResults} $out/bin
             '';
 
             # installPhase = ''
