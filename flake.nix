@@ -88,14 +88,10 @@
             phases = [ "installPhase" ];
 
             installPhase = ''
-              mkdir -p $out/result-files
+              mkdir -p $out
 
-              for file in $(find ${src} -type f); do
-                if ${lib.foldl' (acc: p: acc || lib.hasInfix "${p}/" file) false targetPlatform.resultFiles}; then
-                  dst=$out/result-files/$(realpath --relative-to=${src} $file)
-                  mkdir -p $(dirname $dst)
-                  cp "$file" "$dst"
-                fi
+              for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
+                cp -R ${src}/$dir $out/
               done
             '';
           };
