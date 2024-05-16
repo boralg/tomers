@@ -88,7 +88,7 @@
           in
           pkgs.stdenv.mkDerivation
             {
-              pname = "filtered-files";
+              pname = "full";
               version = "1.0";
 
               src = out;
