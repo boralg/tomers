@@ -98,9 +98,9 @@
             phases = [ "installPhase" ];
 
             installPhase = ''
-              mkdir $out/bin
-              ls ${filteredResults}
-              cp ${filteredResults}/* $out/bin
+              mkdir -p $out/bin
+              ls .
+              cp ./* $out/bin
             '';
 
             # installPhase = ''
