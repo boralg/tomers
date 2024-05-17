@@ -102,7 +102,7 @@
                 cp -R ${package}/bin/* $out/bin
 
                 for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
-                  cp -R ${out}/$dir $out/bin/$dir
+                  cp -R ${out}/$dir $out/$dir
                 done
               '';
             };
