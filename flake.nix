@@ -97,12 +97,12 @@
               phases = [ "installPhase" ];
 
               installPhase = ''
-                mkdir -p $out
+                mkdir -p $out/bin
 
-                cp -R ${package}/bin $out
+                cp -R ${package}/bin/* $out/bin
 
                 for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
-                  cp -R ${out}/$dir $out/$dir
+                  cp -R ${out}/$dir $out/bin/$dir
                 done
               '';
             };
