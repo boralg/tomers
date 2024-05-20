@@ -74,7 +74,7 @@
                 || (craneLib.filterCargoSources path type);
             };
 
-            package = craneLib.buildPackage {
+            package = craneLib.buildPackage ({
               inherit src;
 
               strictDeps = true;
@@ -84,7 +84,7 @@
               depsBuildBuild = targetPlatform.depsBuild;
 
               postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
-            };
+            } // targetPlatform.env);
           in
           pkgs.stdenv.mkDerivation
             {
