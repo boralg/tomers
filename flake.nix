@@ -115,7 +115,7 @@
           craneLib.devShell ({
             CARGO_BUILD_TARGET = targetPlatform.system;
             depsBuildBuild = targetPlatform.depsBuild;
-          });
+          } // targetPlatform.env);
 
         eachPlatform = targetPlatforms: mkFor: pkgs.lib.attrsets.mapAttrs (name: platform: mkFor platform) targetPlatforms // {
           default = mkFor ((mkPlatform (targetPlatforms.${system} // { isDefault = true; })).value);
