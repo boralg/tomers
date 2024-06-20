@@ -65,45 +65,18 @@
                 (lib.foldl' (acc: p: acc || builtins.match p path != null) false targetPlatform.buildFilePatterns)
                 || (craneLib.filterCargoSources path type);
             };
-            out = lib.cleanSourceWith {
-              src = craneLib.path srcLocation;
-              filter = path: type:
-                (lib.foldl' (acc: p: acc || p == path) false targetPlatform.resultFiles)
-                || (craneLib.filterCargoSources path type);
-            };
-
-            package = craneLib.buildPackage ({
-              inherit src;
-
-              strictDeps = true;
-              doCheck = false;
-
-              CARGO_BUILD_TARGET = targetPlatform.system;
-              depsBuildBuild = targetPlatform.depsBuild;
-
-              postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
-            } // targetPlatform.env);
           in
-          pkgs.stdenv.mkDerivation
-            {
-              pname = "full";
-              version = "1.0";
+          craneLib.buildPackage ({
+            inherit src;
 
-              src = out;
+            strictDeps = true;
+            doCheck = false;
 
-              buildInputs = [ pkgs.coreutils ];
-              phases = [ "installPhase" ];
+            CARGO_BUILD_TARGET = targetPlatform.system;
+            depsBuildBuild = targetPlatform.depsBuild;
 
-              installPhase = ''
-                mkdir -p $out
-
-                cp -R ${package}/* $out/
-
-                for dir in ${lib.concatStringsSep " " targetPlatform.resultFiles}; do
-                  cp -R ${out}/$dir $out/$dir
-                done
-              '';
-            };
+            postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
+          } // targetPlatform.env);
 
 
         shellFor = srcLocation: targetPlatform:
@@ -121,7 +94,7 @@
 
         platforms = builtins.listToAttrs (map mkPlatform targetPlatforms);
       in
-      rec {
+      {
         packagesForEachPlatform = srcLocation: eachPlatform platforms (crateFor srcLocation);
         devShellsForEachPlatform = srcLocation: eachPlatform platforms (shellFor srcLocation);
       };
