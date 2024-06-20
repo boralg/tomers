@@ -64,13 +64,13 @@
             src = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type:
-                (lib.foldl' (acc: p: acc || builtins.match ".*/${p}/.*" path != null) false targetPlatform.buildFiles)
+                (lib.foldl' (acc: p: acc || p == path) false targetPlatform.buildFiles)
                 || (craneLib.filterCargoSources path type);
             };
             out = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type:
-                (lib.foldl' (acc: p: acc || builtins.match ".*/${p}/.*" path != null) false targetPlatform.resultFiles)
+                (lib.foldl' (acc: p: acc || p == path) false targetPlatform.resultFiles)
                 || (craneLib.filterCargoSources path type);
             };
 
