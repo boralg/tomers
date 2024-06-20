@@ -17,7 +17,7 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { nixpkgs, crane, fenix, flake-utils, ... }: {
+  outputs = { nixpkgs, crane, fenix, ... }: {
     libFor = system: targetPlatforms:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -29,8 +29,7 @@
           , depsBuild ? [ ]
           , env ? { }
           , postInstall ? _: ""
-          , buildFiles ? [ ]
-          , resultFiles ? [ ]
+          , buildFilePatterns ? [ ]
           , isDefault ? false
           }: {
             name = arch;
@@ -41,8 +40,7 @@
                 inherit depsBuild;
                 inherit env;
                 postInstall = crateName: if isDefault then "" else pi crateName;
-                inherit buildFiles;
-                inherit resultFiles;
+                inherit buildFilePatterns;
                 inherit isDefault;
               };
           };
@@ -64,7 +62,7 @@
             src = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type:
-                (lib.foldl' (acc: p: acc || p == path) false targetPlatform.buildFiles)
+                (lib.foldl' (acc: p: acc || builtins.match ".*/${p}/.*" path != null) false targetPlatform.buildFilePatterns)
                 || (craneLib.filterCargoSources path type);
             };
             out = lib.cleanSourceWith {
