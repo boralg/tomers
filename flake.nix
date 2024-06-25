@@ -76,6 +76,7 @@
             depsBuildBuild = targetPlatform.depsBuild;
 
             postInstall = targetPlatform.postInstall (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
+            buildTargets = ["lib" "bin"];
           } // targetPlatform.env);
 
 
