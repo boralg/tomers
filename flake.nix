@@ -30,7 +30,6 @@
           , env ? { }
           , postInstall ? _: ""
           , buildFilePatterns ? [ ]
-          , extraSources ? [ ]
           , isDefault ? false
           }: {
             name = arch;
@@ -42,7 +41,6 @@
                 inherit env;
                 postInstall = crateName: if isDefault then "" else pi crateName;
                 inherit buildFilePatterns;
-                inherit extraSources;
                 inherit isDefault;
               };
           };
@@ -67,7 +65,6 @@
               filter = path: type:
                 (lib.foldl' (acc: p: acc || builtins.match p path != null) false targetPlatform.buildFilePatterns)
                 || (craneLib.filterCargoSources path type);
-              extraSources = targetPlatform.extraSources;
             };
           in
           craneLib.buildPackage ({
