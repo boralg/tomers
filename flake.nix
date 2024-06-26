@@ -61,7 +61,7 @@
             craneLib = mkCraneLib targetPlatform;
             
             src = lib.cleanSourceWith {
-              src = builtins.concatMap (srcLocation: craneLib.path srcLocation) srcLocation;
+              src = craneLib.path srcLocation;
               filter = path: type:
                 (lib.foldl' (acc: p: acc || builtins.match p path != null) false targetPlatform.buildFilePatterns)
                 || (craneLib.filterCargoSources path type);
