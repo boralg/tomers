@@ -28,9 +28,10 @@
           , arch
           , depsBuild ? [ ]
           , env ? { }
-          , postInstall ? _: ""
+          , postInstall ? _crateName: ""
           , buildFilePatterns ? [ ]
           , isDefault ? false
+          , toolchainPackages ? _fenixPkgs: _crossFenixPkgs: []
           }: {
             name = arch;
             value = let pi = postInstall; in
@@ -42,17 +43,18 @@
                 postInstall = crateName: if isDefault then "" else pi crateName;
                 inherit buildFilePatterns;
                 inherit isDefault;
+                inherit toolchainPackages;
               };
           };
 
         mkCraneLib = targetPlatform:
           let
             toolchain = with fenix.packages.${system};
-              combine [
+              combine ([
                 latest.rustc
                 latest.cargo
                 targets.${targetPlatform.system}.latest.rust-std
-              ];
+              ] ++ targetPlatform.toolchainPackages latest targets.${targetPlatform.system}.latest);
           in
           (crane.mkLib pkgs).overrideToolchain toolchain;
 
