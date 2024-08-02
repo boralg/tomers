@@ -31,7 +31,7 @@
           , postInstall ? _crateName: ""
           , buildFilePatterns ? [ ]
           , isDefault ? false
-          , toolchainPackages ? _fenixPkgs: _crossFenixPkgs: []
+          , toolchainPackages ? _fenixPkgs: _crossFenixPkgs: [ ]
           }: {
             name = arch;
             value = let pi = postInstall; in
@@ -54,14 +54,14 @@
                 stable.rustc
                 stable.cargo
                 targets.${targetPlatform.system}.stable.rust-std
-              ] ++ targetPlatform.toolchainPackages stable targets.${targetPlatform.system}.stable);
+              ] ++ targetPlatform.toolchainPackages fenix.packages.${system} fenix.packages.${system}.targets.${targetPlatform.system});
           in
           (crane.mkLib pkgs).overrideToolchain toolchain;
 
         crateFor = srcLocation: targetPlatform:
           let
             craneLib = mkCraneLib targetPlatform;
-            
+
             src = lib.cleanSourceWith {
               src = craneLib.path srcLocation;
               filter = path: type:
