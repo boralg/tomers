@@ -51,10 +51,10 @@
           let
             toolchain = with fenix.packages.${system};
               combine ([
-                latest.rustc
-                latest.cargo
-                targets.${targetPlatform.system}.latest.rust-std
-              ] ++ targetPlatform.toolchainPackages latest targets.${targetPlatform.system}.latest);
+                stable.rustc
+                stable.cargo
+                stable.${targetPlatform.system}.latest.rust-std
+              ] ++ targetPlatform.toolchainPackages stable targets.${targetPlatform.system}.stable);
           in
           (crane.mkLib pkgs).overrideToolchain toolchain;
 
