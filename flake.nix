@@ -53,7 +53,7 @@
               combine ([
                 stable.rustc
                 stable.cargo
-                stable.${targetPlatform.system}.latest.rust-std
+                targets.${targetPlatform.system}.stable.rust-std
               ] ++ targetPlatform.toolchainPackages stable targets.${targetPlatform.system}.stable);
           in
           (crane.mkLib pkgs).overrideToolchain toolchain;
