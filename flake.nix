@@ -31,13 +31,6 @@
           inherit (pkgs) lib;
 
           mkPlatform =
-            let
-              defaultToolchain = with fenix.packages.${system}; [
-                stable.rustc
-                stable.cargo
-                targets.${targetPlatform.system}.stable.rust-std
-              ];
-            in
             {
               system,
               arch,
@@ -46,7 +39,7 @@
               postInstall ? _crateName: "",
               buildFilePatterns ? [ ],
               isDefault ? false,
-              toolchainPackages ? _fenixPkgs: _crossFenixPkgs: defaultToolchain,
+              toolchainPackages,
             }:
             {
               name = arch;
