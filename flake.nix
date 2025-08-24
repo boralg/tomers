@@ -36,8 +36,8 @@
               arch,
               depsBuild ? [ ],
               env ? { },
-              postInstall ? _crateName: "",
-              postInstallNixStore ? _crateName: "",
+              postInstall ? (_crateName: ""),
+              postInstallNixStore ? (_crateName: ""),
               buildFilePatterns ? [ ],
               isDefault ? false,
               toolchainPackages,
@@ -54,8 +54,7 @@
                   inherit arch;
                   inherit depsBuild;
                   inherit env;
-                  postInstall = crateName: if isDefault then "" else pi crateName;
-                  postInstallNixStore = crateName: if !isDefault then "" else pins crateName;
+                  postInstall = if isDefault then pins else pi;
                   inherit buildFilePatterns;
                   inherit isDefault;
                   inherit toolchainPackages;
@@ -96,11 +95,8 @@
                 depsBuildBuild = targetPlatform.depsBuild;
 
                 postInstall =
-                  let
-                    crateName = (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
-                  in
-                  targetPlatform.postInstall crateName + targetPlatform.postInstallNixStore crateName;
-
+                  targetPlatform.postInstall
+                    (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
               }
               // targetPlatform.env
             );
