@@ -47,6 +47,7 @@
               value =
                 let
                   pi = postInstall;
+                  pins = postInstallNixStore;
                 in
                 rec {
                   inherit system;
@@ -54,7 +55,7 @@
                   inherit depsBuild;
                   inherit env;
                   postInstall = crateName: if isDefault then "" else pi crateName;
-                  postInstallNixStore = crateName: if !isDefault then "" else pi crateName;
+                  postInstallNixStore = crateName: if !isDefault then "" else pins crateName;
                   inherit buildFilePatterns;
                   inherit isDefault;
                   inherit toolchainPackages;
@@ -95,8 +96,11 @@
                 depsBuildBuild = targetPlatform.depsBuild;
 
                 postInstall =
-                  targetPlatform.postInstall
-                    (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
+                  let
+                    crateName = (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
+                  in
+                  targetPlatform.postInstall crateName + targetPlatform.postInstallNixStore crateName;
+
               }
               // targetPlatform.env
             );
