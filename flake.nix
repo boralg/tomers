@@ -42,23 +42,19 @@
               isDefault ? false,
               toolchainPackages,
             }:
-            {
-              name = arch;
-              value =
-                let
-                  pi = postInstall;
-                  pins = postInstallNixStore;
-                in
-                rec {
-                  inherit system;
-                  inherit arch;
-                  inherit depsBuild;
-                  inherit env;
-                  postInstall = if isDefault then pins else pi;
-                  inherit buildFilePatterns;
-                  inherit isDefault;
-                  inherit toolchainPackages;
-                };
+            let
+              pi = postInstall;
+              pins = postInstallNixStore;
+            in
+            rec {
+              inherit system;
+              inherit arch;
+              inherit depsBuild;
+              inherit env;
+              postInstall = if isDefault then pins else pi;
+              inherit buildFilePatterns;
+              inherit isDefault;
+              inherit toolchainPackages;
             };
 
           mkCraneLib =
@@ -116,12 +112,17 @@
 
           eachPlatform =
             targetPlatforms: mkFor:
-            pkgs.lib.attrsets.mapAttrs (name: platform: mkFor platform) targetPlatforms
+            pkgs.lib.attrsets.mapAttrs (_name: platform: mkFor (mkPlatform platform)) targetPlatforms
             // {
-              default = mkFor ((mkPlatform (targetPlatforms.${system} // { isDefault = true; })).value);
+              default = mkFor (mkPlatform (targetPlatforms.${system} // { isDefault = true; }));
             };
 
-          platforms = builtins.listToAttrs (map mkPlatform targetPlatforms);
+          platforms = builtins.listToAttrs (
+            map (e: {
+              name = e.arch;
+              value = e;
+            }) targetPlatforms
+          );
         in
         {
           packagesForEachPlatform = srcLocation: eachPlatform platforms (crateFor srcLocation);
