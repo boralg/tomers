@@ -37,6 +37,7 @@
               depsBuild ? [ ],
               env ? { },
               postInstall ? _crateName: "",
+              postInstallNixStore ? _crateName: "",
               buildFilePatterns ? [ ],
               isDefault ? false,
               toolchainPackages,
@@ -53,6 +54,7 @@
                   inherit depsBuild;
                   inherit env;
                   postInstall = crateName: if isDefault then "" else pi crateName;
+                  postInstallNixStore = crateName: if !isDefault then "" else pi crateName;
                   inherit buildFilePatterns;
                   inherit isDefault;
                   inherit toolchainPackages;
