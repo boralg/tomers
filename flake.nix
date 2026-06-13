@@ -80,14 +80,24 @@
                   || (craneLib.filterCargoSources path type);
               };
 
-              # crane sets srcForRemapPathPrefix to the user's src by default, which
-              # includes .rs files and changes on every edit, making buildDepsOnly unstable
-              dummySrc = craneLib.mkDummySrc { inherit src; };
+              # crane defaults srcForRemapPathPrefix to `src` (which includes .rs files),
+              # making buildDepsOnly rebuild on every source edit. A manifest-only source
+              # is stable across .rs changes.
+              manifestSrc = lib.cleanSourceWith {
+                src = craneLib.path srcLocation;
+                filter =
+                  path: type:
+                  lib.elem (baseNameOf path) [
+                    "Cargo.toml"
+                    "Cargo.lock"
+                  ]
+                  || type == "directory";
+              };
 
               cargoArtifacts = craneLib.buildDepsOnly (
                 {
                   inherit src;
-                  srcForRemapPathPrefix = dummySrc;
+                  srcForRemapPathPrefix = manifestSrc;
 
                   strictDeps = true;
                   doCheck = false;
@@ -101,7 +111,7 @@
             craneLib.buildPackage (
               {
                 inherit src cargoArtifacts;
-                srcForRemapPathPrefix = dummySrc;
+                srcForRemapPathPrefix = manifestSrc;
 
                 strictDeps = true;
                 doCheck = false;
