@@ -93,10 +93,24 @@
                   ]
                   || type == "directory";
               };
+
+              cargoArtifacts = craneLib.buildDepsOnly (
+                {
+                  inherit src;
+                  srcForRemapPathPrefix = manifestSrc;
+
+                  strictDeps = true;
+                  doCheck = false;
+
+                  CARGO_BUILD_TARGET = targetPlatform.system;
+                  depsBuildBuild = targetPlatform.depsBuild;
+                }
+                // targetPlatform.env
+              );
             in
             craneLib.buildPackage (
               {
-                inherit src;
+                inherit src cargoArtifacts;
                 srcForRemapPathPrefix = manifestSrc;
 
                 strictDeps = true;
