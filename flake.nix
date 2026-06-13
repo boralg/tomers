@@ -80,13 +80,18 @@
                   || (craneLib.filterCargoSources path type);
               };
 
+              # crane sets srcForRemapPathPrefix to the user's src by default, which
+              # includes .rs files and changes on every edit, making buildDepsOnly unstable
+              dummySrc = craneLib.mkDummySrc { inherit src; };
+
               cargoArtifacts = craneLib.buildDepsOnly (
                 {
                   inherit src;
+                  srcForRemapPathPrefix = dummySrc;
 
                   strictDeps = true;
                   doCheck = false;
-                  
+
                   CARGO_BUILD_TARGET = targetPlatform.system;
                   depsBuildBuild = targetPlatform.depsBuild;
                 }
@@ -96,6 +101,7 @@
             craneLib.buildPackage (
               {
                 inherit src cargoArtifacts;
+                srcForRemapPathPrefix = dummySrc;
 
                 strictDeps = true;
                 doCheck = false;
