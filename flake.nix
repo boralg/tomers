@@ -79,10 +79,23 @@
                   (lib.foldl' (acc: p: acc || builtins.match p path != null) false targetPlatform.buildFilePatterns)
                   || (craneLib.filterCargoSources path type);
               };
+
+              cargoArtifacts = craneLib.buildDepsOnly (
+                {
+                  inherit src;
+
+                  strictDeps = true;
+                  doCheck = false;
+                  
+                  CARGO_BUILD_TARGET = targetPlatform.system;
+                  depsBuildBuild = targetPlatform.depsBuild;
+                }
+                // targetPlatform.env
+              );
             in
             craneLib.buildPackage (
               {
-                inherit src;
+                inherit src cargoArtifacts;
 
                 strictDeps = true;
                 doCheck = false;
