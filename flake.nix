@@ -35,6 +35,7 @@
               system,
               arch,
               depsBuild ? [ ],
+              targetLibs ? [ ],
               env ? { },
               postInstall ? (_crateName: ""),
               postInstallNixStore ? (_crateName: ""),
@@ -50,6 +51,7 @@
               inherit system;
               inherit arch;
               inherit depsBuild;
+              inherit targetLibs;
               inherit env;
               postInstall = if isDefault then pins else pi;
               inherit buildFilePatterns;
@@ -60,12 +62,62 @@
           mkCraneLib =
             targetPlatform:
             let
-              toolchain = fenix.packages.${system}.combine (
-                targetPlatform.toolchainPackages fenix.packages.${system}
-                  fenix.packages.${system}.targets.${targetPlatform.system}
+              fenixPkgs = fenix.packages.${system};
+              crossFenixPkgs = fenixPkgs.targets.${targetPlatform.system};
+
+              targetSupport =
+                [ crossFenixPkgs.stable.rust-std ]
+                ++ lib.optional (lib.hasSuffix "-windows-gnu" targetPlatform.system)
+                  crossFenixPkgs.stable.rust-mingw;
+
+              toolchain = fenixPkgs.combine (
+                lib.unique (targetPlatform.toolchainPackages fenixPkgs crossFenixPkgs ++ targetSupport)
               );
             in
             (crane.mkLib pkgs).overrideToolchain toolchain;
+
+          targetLibFlagsOf =
+            targetPlatform:
+            lib.concatStringsSep " " (map (drv: "-L native=${drv}/lib") targetPlatform.targetLibs);
+
+          envOf =
+            targetPlatform:
+            if builtins.isFunction targetPlatform.env then
+              targetPlatform.env { targetLibFlags = targetLibFlagsOf targetPlatform; }
+            else
+              targetPlatform.env;
+
+          targetLibFlagsFor =
+            targetPlatform:
+            let
+              triple = lib.toUpper (builtins.replaceStrings [ "-" ] [ "_" ] targetPlatform.system);
+              varName = "CARGO_TARGET_${triple}_RUSTFLAGS";
+              flags = targetLibFlagsOf targetPlatform;
+              env = envOf targetPlatform;
+
+              # hasInfix rejects needles with store refs in them
+              needle = builtins.unsafeDiscardStringContext flags;
+              clobbering = lib.filter (
+                name: env ? ${name} && !(lib.hasInfix needle (toString env.${name}))
+              ) [ "CARGO_ENCODED_RUSTFLAGS" "RUSTFLAGS" varName ];
+            in
+            lib.optionalAttrs (targetPlatform.targetLibs != [ ]) (
+              if clobbering != [ ] then
+                throw ''
+                  tomers: platform ${targetPlatform.system} sets ${lib.concatStringsSep ", " clobbering} in `env`,
+                  replacing the linker search paths implicitly derived from targetLibs.
+
+                  Either extend them rather than replacing:
+
+                    env = { targetLibFlags }: {
+                      RUSTFLAGS = "<your flags> ''${targetLibFlags}";
+                    };
+
+                  or move the libraries those flags point at into targetLibs.
+                ''
+              else
+                { "${varName}" = flags; }
+            );
 
           crateFor =
             srcLocation: targetPlatform:
@@ -105,7 +157,8 @@
                   CARGO_BUILD_TARGET = targetPlatform.system;
                   depsBuildBuild = targetPlatform.depsBuild;
                 }
-                // targetPlatform.env
+                // targetLibFlagsFor targetPlatform
+                // envOf targetPlatform
               );
             in
             craneLib.buildPackage (
@@ -123,7 +176,8 @@
                   targetPlatform.postInstall
                     (craneLib.crateNameFromCargoToml { cargoToml = "${src}/Cargo.toml"; }).pname;
               }
-              // targetPlatform.env
+              // targetLibFlagsFor targetPlatform
+              // envOf targetPlatform
             );
 
           shellFor =
@@ -136,7 +190,8 @@
                 CARGO_BUILD_TARGET = targetPlatform.system;
                 depsBuildBuild = targetPlatform.depsBuild;
               }
-              // targetPlatform.env
+              // targetLibFlagsFor targetPlatform
+              // envOf targetPlatform
             );
 
           eachPlatform =
